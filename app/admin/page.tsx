@@ -19,7 +19,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f0f4f8", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#f0f4f8", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", padding: "16px" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@700&display=swap');
         @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
@@ -29,7 +29,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
         .pw-input { width:100%;padding:12px 16px;border:1.5px solid #e2eaf2;border-radius:10px;font-size:15px;color:#1b3e5c;outline:none;font-family:inherit;transition:border 0.15s;text-align:center;letter-spacing:3px; }
         .pw-input:focus { border-color:#2b7aab; }
       `}</style>
-      <div className={shake ? "shake" : ""} style={{ background: "#fff", borderRadius: 20, padding: "48px 40px", width: 380, boxShadow: "0 8px 40px rgba(27,62,92,0.12)", border: "1px solid #e2eaf2", textAlign: "center" }}>
+      <div className={shake ? "shake" : ""} style={{ background: "#fff", borderRadius: 20, padding: "40px 28px", width: "100%", maxWidth: 380, boxShadow: "0 8px 40px rgba(27,62,92,0.12)", border: "1px solid #e2eaf2", textAlign: "center" }}>
         <div style={{ width: 56, height: 56, background: "#1b3e5c", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
@@ -130,6 +130,7 @@ export default function AdminPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [reminderSentId, setReminderSentId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
  
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
@@ -190,8 +191,10 @@ export default function AdminPage() {
     completed: meetings.filter(m => m.status === "completed").length,
     canceled: meetings.filter(m => m.status === "canceled").length,
   };
-   const [unlocked, setUnlocked] = useState(false);
-if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
+
+  const [unlocked, setUnlocked] = useState(false);
+  if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
+
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f8", fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
@@ -202,7 +205,7 @@ if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
 
         .meeting-row {
           background: #fff; border-radius: 14px; border: 1px solid #e2eaf2;
-          padding: 20px 24px; transition: all 0.2s ease;
+          padding: 16px; transition: all 0.2s ease;
           box-shadow: 0 1px 4px rgba(27,62,92,0.04);
         }
         .meeting-row:hover { border-color: #b8d4e8; box-shadow: 0 4px 20px rgba(27,62,92,0.1); transform: translateY(-1px); }
@@ -214,15 +217,15 @@ if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
         }
 
         .action-btn {
-          padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+          padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
           cursor: pointer; border: none; transition: all 0.15s; font-family: inherit;
-          display: inline-flex; align-items: center; gap: 5px;
+          display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
         }
 
         .filter-tab {
-          padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+          padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 500;
           cursor: pointer; border: 1.5px solid transparent; transition: all 0.15s;
-          font-family: inherit; background: transparent; color: #7a8fa0;
+          font-family: inherit; background: transparent; color: #7a8fa0; white-space: nowrap;
         }
         .filter-tab.active { background: #1b3e5c; color: #fff; border-color: #1b3e5c; }
         .filter-tab:not(.active):hover { background: #e8f2f9; color: #1b3e5c; border-color: #d0dde8; }
@@ -230,34 +233,41 @@ if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
         .search-input {
           padding: 9px 14px 9px 38px; border: 1.5px solid #e2eaf2; border-radius: 10px;
           font-size: 13px; color: #1b3e5c; outline: none; font-family: inherit;
-          background: #fff; width: 240px; transition: border 0.15s;
+          background: #fff; width: 100%; transition: border 0.15s;
         }
         .search-input:focus { border-color: #2b7aab; }
 
         .modal-overlay {
           position: fixed; inset: 0; background: rgba(15,30,50,0.5);
-          display: flex; align-items: center; justify-content: center;
+          display: flex; align-items: flex-end; justify-content: center;
           z-index: 1000; backdrop-filter: blur(6px);
           animation: fadeIn 0.2s ease;
         }
+        @media (min-width: 640px) {
+          .modal-overlay { align-items: center; }
+          .modal-box { border-radius: 20px !important; max-height: 85vh !important; }
+        }
         .modal-box {
-          background: #fff; border-radius: 20px; width: 92%; max-width: 640px;
-          max-height: 85vh; display: flex; flex-direction: column;
+          background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-width: 640px;
+          max-height: 92vh; display: flex; flex-direction: column;
           box-shadow: 0 24px 80px rgba(15,30,50,0.2);
           animation: slideUp 0.25s ease;
         }
 
         .stat-card {
-          background: #fff; border-radius: 14px; padding: 20px 24px;
+          background: #fff; border-radius: 14px; padding: 16px;
           border: 1px solid #e2eaf2; box-shadow: 0 2px 8px rgba(27,62,92,0.05);
-          flex: 1;
+          flex: 1; min-width: 0;
         }
 
         .toast {
-          position: fixed; bottom: 24px; right: 24px; z-index: 2000;
+          position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 2000;
           padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 500;
           box-shadow: 0 8px 24px rgba(0,0,0,0.15); animation: slideUp 0.2s ease;
-          display: flex; align-items: center; gap: 8px;
+          display: flex; align-items: center; gap: 8px; white-space: nowrap;
+        }
+        @media (min-width: 640px) {
+          .toast { left: auto; right: 24px; transform: none; }
         }
 
         .select-sm {
@@ -271,16 +281,107 @@ if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
         }
         .select-sm:focus { border-color: #2b7aab; }
 
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+          display: none;
+          position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+          z-index: 99; backdrop-filter: blur(2px);
+        }
+        .sidebar-overlay.open { display: block; }
+
+        /* Sidebar */
+        .sidebar {
+          width: 220px; background: #1b3e5c; padding: 28px 20px;
+          display: flex; flex-direction: column; gap: 8px;
+          position: fixed; top: 0; left: 0; height: 100vh;
+          z-index: 100; transform: translateX(-100%);
+          transition: transform 0.25s ease;
+        }
+        .sidebar.open { transform: translateX(0); }
+        @media (min-width: 768px) {
+          .sidebar { position: sticky; transform: none !important; }
+          .sidebar-overlay { display: none !important; }
+          .mobile-topbar { display: none !important; }
+        }
+
+        /* Mobile top bar */
+        .mobile-topbar {
+          display: flex; align-items: center; justify-content: space-between;
+          background: #1b3e5c; padding: 14px 16px;
+          position: sticky; top: 0; z-index: 50;
+        }
+
+        /* Stats grid */
+        .stats-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+        @media (min-width: 640px) {
+          .stats-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        /* Filter scroll */
+        .filter-scroll {
+          display: flex; gap: 6px; overflow-x: auto;
+          padding-bottom: 4px; -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+        .filter-scroll::-webkit-scrollbar { display: none; }
+
+        /* Main layout */
+        .app-layout {
+          display: flex; min-height: 100vh;
+        }
+        .main-content {
+          flex: 1; padding: 20px 16px; overflow-y: auto; min-width: 0;
+        }
+        @media (min-width: 768px) {
+          .main-content { padding: 32px 36px; }
+        }
+
+        /* Meeting meta info wraps nicely */
+        .meeting-meta {
+          display: flex; gap: 12px; flex-wrap: wrap;
+          font-size: 12px; color: #7a8fa0; margin-bottom: 10px;
+        }
+
+        /* Action buttons wrap */
+        .action-row {
+          display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+        }
+
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: translateY(0) } }
         @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.5 } }
       `}</style>
 
-      {/* Sidebar + Main layout */}
-      <div style={{ display: "flex", minHeight: "100vh" }}>
+      {/* Mobile top bar */}
+      <div className="mobile-topbar">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 8, padding: "8px 10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 700, color: "#fff" }}>Smart Logics</span>
+        <button
+          onClick={fetchMeetings}
+          style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 8, padding: "8px 10px", cursor: "pointer", color: "#fff", fontSize: 16 }}
+        >
+          ↻
+        </button>
+      </div>
 
+      {/* Sidebar overlay (mobile) */}
+      <div className={`sidebar-overlay ${sidebarOpen ? "open" : ""}`} onClick={() => setSidebarOpen(false)} />
+
+      <div className="app-layout">
         {/* Sidebar */}
-        <aside style={{ width: 220, background: "#1b3e5c", padding: "28px 20px", display: "flex", flexDirection: "column", gap: 8, position: "sticky", top: 0, height: "100vh" }}>
+        {/* <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
           <div style={{ marginBottom: 32 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <div style={{ width: 32, height: 32, background: "#2b7aab", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -296,13 +397,15 @@ if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
             { icon: "👥", label: "Clients", active: false },
             { icon: "⚙️", label: "Settings", active: false },
           ].map(item => (
-            <div key={item.label} style={{
-              padding: "10px 14px", borderRadius: 10, display: "flex", alignItems: "center", gap: 10,
-              background: item.active ? "rgba(43,122,171,0.25)" : "transparent",
-              color: item.active ? "#fff" : "#7aadcf", fontSize: 13, fontWeight: item.active ? 600 : 400,
-              cursor: "pointer", transition: "all 0.15s",
-              borderLeft: item.active ? "3px solid #2b7aab" : "3px solid transparent"
-            }}>
+            <div key={item.label}
+              onClick={() => setSidebarOpen(false)}
+              style={{
+                padding: "10px 14px", borderRadius: 10, display: "flex", alignItems: "center", gap: 10,
+                background: item.active ? "rgba(43,122,171,0.25)" : "transparent",
+                color: item.active ? "#fff" : "#7aadcf", fontSize: 13, fontWeight: item.active ? 600 : 400,
+                cursor: "pointer", transition: "all 0.15s",
+                borderLeft: item.active ? "3px solid #2b7aab" : "3px solid transparent"
+              }}>
               <span style={{ fontSize: 14 }}>{item.icon}</span>{item.label}
             </div>
           ))}
@@ -314,52 +417,54 @@ if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
               <span style={{ fontSize: 12, color: "#a8c8e0" }}>API Online</span>
             </div>
           </div>
-        </aside>
+        </aside> */}
 
         {/* Main */}
-        <main style={{ flex: 1, padding: "32px 36px", overflowY: "auto" }}>
+        <main className="main-content">
 
-          {/* Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 32 }}>
+          {/* Header — hidden on mobile (handled by topbar) */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
             <div>
-              <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 700, color: "#1b3e5c", marginBottom: 4 }}>
+              <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 700, color: "#1b3e5c", marginBottom: 4 }}>
                 Meetings Dashboard
               </h1>
-              <p style={{ color: "#7a8fa0", fontSize: 14 }}>
+              <p style={{ color: "#7a8fa0", fontSize: 13 }}>
                 {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
               </p>
             </div>
+            {/* Desktop refresh button */}
             <button
               onClick={fetchMeetings}
-              style={{ padding: "10px 18px", background: "#1b3e5c", color: "#fff", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}
+              style={{ padding: "10px 18px", background: "#1b3e5c", color: "#fff", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "none" }}
+              className="desktop-refresh"
             >
               ↻ Refresh
             </button>
           </div>
 
-          {/* Stats */}
-          <div style={{ display: "flex", gap: 16, marginBottom: 28 }}>
+          {/* Stats grid */}
+          <div className="stats-grid">
             {[
-              { label: "Total Meetings", value: stats.total, color: "#1b3e5c", icon: "📊" },
-              { label: "Upcoming", value: stats.upcoming, color: "#2b7aab", icon: "⏰" },
-              { label: "Completed", value: stats.completed, color: "#16a34a", icon: "✅" },
-              { label: "Canceled", value: stats.canceled, color: "#dc2626", icon: "❌" },
+              { label: "Total", value: stats.total, color: "#1b3e5c" },
+              { label: "Upcoming", value: stats.upcoming, color: "#2b7aab"},
+              { label: "Completed", value: stats.completed, color: "#16a34a" },
+              { label: "Canceled", value: stats.canceled, color: "#dc2626" },
             ].map(s => (
               <div key={s.label} className="stat-card">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
-                    <p style={{ fontSize: 11, fontWeight: 600, color: "#7a8fa0", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 8 }}>{s.label}</p>
-                    <p style={{ fontSize: 32, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</p>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: "#7a8fa0", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 }}>{s.label}</p>
+                    <p style={{ fontSize: 28, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</p>
                   </div>
-                  <span style={{ fontSize: 22 }}>{s.icon}</span>
+                 
                 </div>
               </div>
             ))}
           </div>
 
           {/* Filters + Search */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-            <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="filter-scroll">
               {(["all","upcoming","completed","canceled"] as const).map(f => (
                 <button key={f} className={`filter-tab ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>
                   {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -398,17 +503,18 @@ if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
 
                 return (
                   <div key={meeting.id} className="meeting-row">
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
 
                       {/* Purpose icon */}
-                      <div style={{ width: 44, height: 44, background: "#f0f7fc", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
+                      <div style={{ width: 40, height: 40, background: "#f0f7fc", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
                         {purposeIcon}
                       </div>
 
                       {/* Info */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4, flexWrap: "wrap" }}>
-                          <span style={{ fontWeight: 600, fontSize: 15, color: "#1b3e5c" }}>{meeting.client_name}</span>
+                        {/* Name + status row */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                          <span style={{ fontWeight: 600, fontSize: 14, color: "#1b3e5c" }}>{meeting.client_name}</span>
                           <span className="status-badge" style={{ background: sc.bg, color: sc.color }}>
                             <span style={{ width: 5, height: 5, borderRadius: "50%", background: sc.dot, display: "inline-block" }}/>
                             {sc.label}
@@ -420,20 +526,21 @@ if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
                           )}
                         </div>
 
-                        <div style={{ display: "flex", gap: 20, flexWrap: "wrap", fontSize: 12, color: "#7a8fa0", marginBottom: 8 }}>
+                        {/* Meta info */}
+                        <div className="meeting-meta">
                           <span>✉️ {meeting.client_email}</span>
                           <span>📅 {formatDate(meeting.start_time)}</span>
                           <span>🕐 {formatTime(meeting.start_time)} – {formatTime(meeting.end_time)}</span>
-                          {meeting.purpose && <span>🎯 {meeting.purpose}</span>}
+                          {meeting.purpose && <span> {meeting.purpose}</span>}
                         </div>
 
                         {/* Actions row */}
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                        <div className="action-row">
 
                           {/* Meet link */}
                           <a href={meeting.meet_link} target="_blank" rel="noopener noreferrer"
                             style={{ padding: "6px 12px", background: "#1b3e5c", color: "#fff", borderRadius: 8, fontSize: 12, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                            📹 Join Meet
+                             Join Meet
                           </a>
 
                           {/* WhatsApp */}
@@ -449,7 +556,7 @@ if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
                             <button className="action-btn"
                               onClick={() => sendReminder(meeting.google_event_id)}
                               style={{ background: reminderSent ? "#dcfce7" : "#fff3e0", color: reminderSent ? "#16a34a" : "#d97706", border: `1.5px solid ${reminderSent ? "#bbf7d0" : "#fed7aa"}` }}>
-                              {reminderSent ? "✓ Sent!" : "🔔 Remind"}
+                              {reminderSent ? "✓ Sent!" : " Remind"}
                             </button>
                           )}
 
@@ -490,38 +597,38 @@ if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
         <div className="modal-overlay" onClick={() => setContextModal(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             {/* Modal header */}
-            <div style={{ padding: "24px 28px 20px", borderBottom: "1px solid #eef2f6", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
+            <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid #eef2f6", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                   <span style={{ fontSize: 20 }}>{PURPOSE_ICONS[contextModal.purpose] || "📋"}</span>
-                  <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: "#1b3e5c" }}>AI Meeting Context</h2>
+                  <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: "#1b3e5c" }}>AI Meeting Context</h2>
                 </div>
                 <p style={{ fontSize: 12, color: "#7a8fa0" }}>
                   {contextModal.client_name} · {contextModal.purpose} · {formatDate(contextModal.start_time)}
                 </p>
               </div>
               <button onClick={() => setContextModal(null)}
-                style={{ width: 30, height: 30, borderRadius: "50%", border: "1.5px solid #e2eaf2", background: "#fff", cursor: "pointer", fontSize: 16, color: "#7a8fa0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                style={{ width: 30, height: 30, borderRadius: "50%", border: "1.5px solid #e2eaf2", background: "#fff", cursor: "pointer", fontSize: 16, color: "#7a8fa0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 ×
               </button>
             </div>
 
             {/* Modal body */}
-            <div style={{ padding: "24px 28px", overflowY: "auto", flex: 1 }}>
-              <div style={{ background: "#f8fafc", borderRadius: 12, padding: "20px 22px", border: "1px solid #e2eaf2", fontSize: 13, color: "#374151", lineHeight: 1.7 }}
+            <div style={{ padding: "20px", overflowY: "auto", flex: 1 }}>
+              <div style={{ background: "#f8fafc", borderRadius: 12, padding: "16px", border: "1px solid #e2eaf2", fontSize: 13, color: "#374151", lineHeight: 1.7 }}
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(contextModal.extra_context || "") }}
               />
             </div>
 
             {/* Modal footer */}
-            <div style={{ padding: "16px 28px", borderTop: "1px solid #eef2f6", display: "flex", justifyContent: "flex-end", gap: 10 }}>
+            <div style={{ padding: "14px 20px", borderTop: "1px solid #eef2f6", display: "flex", justifyContent: "flex-end", gap: 10 }}>
               <a href={`https://wa.me/?text=${encodeURIComponent(`Meeting context for ${contextModal.client_name}:\n\n${contextModal.extra_context}`)}`}
                 target="_blank" rel="noopener noreferrer"
-                style={{ padding: "8px 16px", background: "#25D366", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                style={{ padding: "8px 14px", background: "#25D366", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
                 Share via WhatsApp
               </a>
               <button onClick={() => setContextModal(null)}
-                style={{ padding: "8px 20px", background: "#1b3e5c", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                style={{ padding: "8px 18px", background: "#1b3e5c", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                 Close
               </button>
             </div>

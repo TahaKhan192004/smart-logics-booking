@@ -1,4 +1,3 @@
-
 "use client";
 import { useState } from "react";
 
@@ -145,7 +144,7 @@ export default function BookingPage() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         .cal-day {
-          width: 38px; height: 38px; border-radius: 50%;
+          width: 36px; height: 36px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
           font-size: 13px; font-weight: 500; cursor: pointer;
           transition: all 0.15s ease; border: none; background: transparent;
@@ -158,7 +157,7 @@ export default function BookingPage() {
         .cal-day.weekend { color: #c0c8d0; cursor: not-allowed; }
 
         .slot-btn {
-          padding: 10px 16px; border-radius: 8px; border: 1.5px solid #d0dde8;
+          padding: 10px 8px; border-radius: 8px; border: 1.5px solid #d0dde8;
           background: #fff; color: #1b3e5c; font-size: 13px; font-weight: 500;
           cursor: pointer; transition: all 0.15s ease; font-family: inherit;
           text-align: center;
@@ -204,16 +203,23 @@ export default function BookingPage() {
 
         .modal-overlay {
           position: fixed; inset: 0; background: rgba(27,62,92,0.35);
-          display: flex; align-items: center; justify-content: center;
+          display: flex; align-items: flex-end; justify-content: center;
           z-index: 1000; backdrop-filter: blur(4px);
           animation: fadeIn 0.2s ease;
+          padding: 0;
+        }
+        @media (min-width: 540px) {
+          .modal-overlay { align-items: center; padding: 16px; }
+          .modal-box { border-radius: 16px !important; max-height: none !important; }
         }
         .modal-box {
-          background: #fff; border-radius: 16px; padding: 40px;
-          max-width: 440px; width: 90%; text-align: center;
+          background: #fff; border-radius: 16px 16px 0 0; padding: 32px 24px;
+          width: 100%; max-width: 440px; text-align: center;
           box-shadow: 0 20px 60px rgba(27,62,92,0.15);
           animation: slideUp 0.25s ease;
+          max-height: 90vh; overflow-y: auto;
         }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -231,36 +237,94 @@ export default function BookingPage() {
           background: #e8f2f9; padding: 2px 8px; border-radius: 20px;
           letter-spacing: 0.5px; text-transform: uppercase;
         }
+
+        /* Layout */
+        .page-header {
+          border-bottom: 1px solid #eef2f6;
+          padding: 16px 20px;
+          display: flex; align-items: center; gap: 12;
+        }
+        @media (min-width: 640px) {
+          .page-header { padding: 20px 40px; }
+        }
+
+        .hero {
+          padding: 32px 20px 24px;
+          text-align: center;
+        }
+        @media (min-width: 640px) {
+          .hero { padding: 48px 40px 36px; }
+        }
+
+        .hero h1 {
+          font-family: 'Playfair Display', serif;
+          font-size: 26px; font-weight: 700; color: #1b3e5c; line-height: 1.2; margin-bottom: 12px;
+        }
+        @media (min-width: 640px) {
+          .hero h1 { font-size: 36px; }
+        }
+
+        .main-grid {
+          max-width: 960px; margin: 0 auto;
+          padding: 0 16px 60px;
+          display: flex; flex-direction: column; gap: 20;
+        }
+        @media (min-width: 768px) {
+          .main-grid {
+            padding: 0 40px 60px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+          }
+        }
+
+        .panel {
+          background: #fff; border: 1px solid #eef2f6; border-radius: 16px;
+          padding: 20px; box-shadow: 0 4px 24px rgba(27,62,92,0.06);
+        }
+        @media (min-width: 640px) {
+          .panel { padding: 28px; }
+        }
+
+        .slots-grid {
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+          max-height: 220px; overflow-y: auto;
+        }
+        @media (min-width: 480px) {
+          .slots-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (min-width: 768px) {
+          .slots-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .right-col {
+          display: flex; flex-direction: column; gap: 20px;
+        }
       `}</style>
 
       {/* Header */}
-      <header style={{ borderBottom: "1px solid #eef2f6", padding: "20px 40px", display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 36, height: 36, background: "#1b3e5c", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <header className="page-header">
+        <div style={{ width: 36, height: 36, background: "#1b3e5c", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
           </svg>
         </div>
-        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#1b3e5c" }}>Smart Logics Solution</span>
-    
+        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "#1b3e5c" }}>Smart Logics Solution</span>
       </header>
 
       {/* Hero */}
-      <div style={{ padding: "48px 40px 36px", maxWidth: 960, margin: "0 auto", textAlign: "center" }}>
+      <div className="hero" style={{ maxWidth: 960, margin: "0 auto" }}>
         <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: 2, color: "#2b7aab", textTransform: "uppercase", marginBottom: 12 }}>Book a Meeting</p>
-        <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, fontWeight: 700, color: "#1b3e5c", lineHeight: 1.2, marginBottom: 12 }}>
-          Schedule a 30-Minute Call
-        </h1>
-        <p style={{ color: "#7a8fa0", fontSize: 15, maxWidth: 480, margin: "0 auto" }}>
+        <h1 className="hero h1">Schedule a 30-Minute Call</h1>
+        <p style={{ color: "#7a8fa0", fontSize: 14, maxWidth: 480, margin: "0 auto" }}>
           Select a date and time that works for you. We'll send a Google Meet link straight to your inbox.
         </p>
       </div>
 
       {/* Main content */}
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 40px 60px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+      <div className="main-grid">
 
         {/* Calendar */}
-        <div style={{ background: "#fff", border: "1px solid #eef2f6", borderRadius: 16, padding: 28, boxShadow: "0 4px 24px rgba(27,62,92,0.06)", alignSelf: "start" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div className="panel" style={{ alignSelf: "start" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
             <button className="nav-btn" onClick={prevMonth}>‹</button>
             <span style={{ fontWeight: 600, fontSize: 15, color: "#1b3e5c" }}>{MONTHS[currentMonth]} {currentYear}</span>
             <button className="nav-btn" onClick={nextMonth}>›</button>
@@ -308,19 +372,19 @@ export default function BookingPage() {
         </div>
 
         {/* Right panel */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div className="right-col">
 
           {/* Slots */}
-          <div style={{ background: "#fff", border: "1px solid #eef2f6", borderRadius: 16, padding: 28, boxShadow: "0 4px 24px rgba(27,62,92,0.06)" }}>
+          <div className="panel">
             {!selectedDate ? (
-              <div style={{ textAlign: "center", padding: "32px 0" }}>
+              <div style={{ textAlign: "center", padding: "28px 0" }}>
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c0c8d0" strokeWidth="1.5" style={{ marginBottom: 12 }}>
                   <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
                 <p style={{ color: "#7a8fa0", fontSize: 14 }}>Select a date to see available slots</p>
               </div>
             ) : loadingSlots ? (
-              <div style={{ textAlign: "center", padding: "32px 0", color: "#7a8fa0", fontSize: 14 }}>Loading slots...</div>
+              <div style={{ textAlign: "center", padding: "28px 0", color: "#7a8fa0", fontSize: 14 }}>Loading slots...</div>
             ) : (
               <>
                 <p style={{ fontSize: 12, fontWeight: 600, color: "#2b7aab", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Available Times</p>
@@ -328,7 +392,7 @@ export default function BookingPage() {
                 {slots.length === 0 ? (
                   <p style={{ color: "#7a8fa0", fontSize: 14, padding: "16px 0" }}>No available slots for this day.</p>
                 ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxHeight: 220, overflowY: "auto" }}>
+                  <div className="slots-grid">
                     {slots.map((slot, i) => (
                       <button
                         key={i}
@@ -346,10 +410,9 @@ export default function BookingPage() {
 
           {/* Booking form */}
           {selectedSlot && (
-            <div style={{ background: "#fff", border: "1px solid #eef2f6", borderRadius: 16, padding: 28, boxShadow: "0 4px 24px rgba(27,62,92,0.06)", animation: "slideUp 0.2s ease" }}>
+            <div className="panel" style={{ animation: "slideUp 0.2s ease" }}>
               <p style={{ fontSize: 12, fontWeight: 600, color: "#2b7aab", letterSpacing: 1, textTransform: "uppercase", marginBottom: 16 }}>Your Details</p>
 
-              {/* Name */}
               <div style={{ marginBottom: 12 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#1b3e5c", marginBottom: 6 }}>Full Name</label>
                 <input
@@ -360,7 +423,6 @@ export default function BookingPage() {
                 />
               </div>
 
-              {/* Email */}
               <div style={{ marginBottom: 12 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#1b3e5c", marginBottom: 6 }}>Email Address</label>
                 <input
@@ -371,18 +433,18 @@ export default function BookingPage() {
                   onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                 />
               </div>
+
               <div style={{ marginBottom: 12 }}>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#1b3e5c", marginBottom: 6 }}>Email Address</label>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#1b3e5c", marginBottom: 6 }}>Contact Number <span style={{ color: "#7a8fa0", fontWeight: 400 }}>(optional)</span></label>
                 <input
                   className="input-field"
                   type="number"
-                  placeholder="contact number (optional)"
+                  placeholder="Contact number"
                   value={form.contact_number}
                   onChange={e => setForm(f => ({ ...f, contact_number: e.target.value }))}
                 />
               </div>
 
-              {/* Purpose dropdown */}
               <div style={{ marginBottom: 12 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#1b3e5c", marginBottom: 6 }}>Purpose of Meeting</label>
                 <select
@@ -397,7 +459,6 @@ export default function BookingPage() {
                 </select>
               </div>
 
-              {/* Conditional context textarea */}
               {form.purpose && (
                 <div style={{ marginBottom: 20, animation: "slideUp 0.2s ease" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
@@ -412,9 +473,7 @@ export default function BookingPage() {
                     value={form.userInput}
                     onChange={e => setForm(f => ({ ...f, userInput: e.target.value }))}
                   />
-                  <p style={{ fontSize: 11, color: "#7a8fa0", marginTop: 5 }}>
-                    Optional — Gemini will expand this into structured meeting notes before your booking is saved.
-                  </p>
+                  <p style={{ fontSize: 11, color: "#7a8fa0", marginTop: 5 }}>Optional</p>
                 </div>
               )}
 
@@ -443,12 +502,12 @@ export default function BookingPage() {
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             </div>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, color: "#1b3e5c", marginBottom: 8 }}>You're Booked!</h2>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#1b3e5c", marginBottom: 8 }}>You're Booked!</h2>
             <p style={{ color: "#7a8fa0", fontSize: 14, marginBottom: 24 }}>A confirmation with your meeting link has been sent to your email.</p>
 
-            <div style={{ background: "#f4f8fc", borderRadius: 10, padding: "14px 20px", marginBottom: 24 }}>
+            <div style={{ background: "#f4f8fc", borderRadius: 10, padding: "14px 16px", marginBottom: 24 }}>
               <p style={{ fontSize: 11, fontWeight: 600, color: "#7a8fa0", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Google Meet Link</p>
-              <a href={modal.meetLink} target="_blank" rel="noopener noreferrer" style={{ color: "#2b7aab", fontWeight: 500, fontSize: 14, wordBreak: "break-all", textDecoration: "none" }}>
+              <a href={modal.meetLink} target="_blank" rel="noopener noreferrer" style={{ color: "#2b7aab", fontWeight: 500, fontSize: 13, wordBreak: "break-all", textDecoration: "none" }}>
                 {modal.meetLink}
               </a>
             </div>
