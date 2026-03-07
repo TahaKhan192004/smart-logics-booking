@@ -1,7 +1,18 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
-
+smart-logics-booking/
+├── app/
+│   ├── admin/           # Admin dashboard pages
+│   ├── layout.tsx       # Root layout component
+│   ├── page.tsx         # Home page
+│   └── page.module.css  # Styling
+├── public/              # Static assets
+├── package.json         # Project dependencies
+├── tsconfig.json        # TypeScript configuration
+├── next.config.ts       # Next.js configuration
+├── eslint.config.mjs    # ESLint configuration
+└── vercel.json          # Vercel deployment config
 First, run the development server:
 
 ```bash
