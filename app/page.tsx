@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -33,6 +33,8 @@ const PURPOSE_LABELS: Record<string, string> = {
   "Sales Demo / Partnership Discussion": "Service / Context",
 };
 
+const TIME_RANGE = { from: "13:00", to: "16:00" };
+
 function formatDisplayDate(dateStr: string) {
   const d = new Date(dateStr + "T00:00:00");
   return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
@@ -47,6 +49,12 @@ function toLocalISO(isoStr: string) {
   const d = new Date(isoStr);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+}
+
+function timeStrToMinutes(time: string) {
+  const [h, m] = time.split(":").map(n => parseInt(n, 10));
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
 }
 
 export default function BookingPage() {
@@ -136,6 +144,22 @@ export default function BookingPage() {
   };
 
   const canBook = !booking && form.name && form.email && form.purpose;
+
+  const fixedFromMinutes = timeStrToMinutes(TIME_RANGE.from) ?? 13 * 60;
+  const fixedToMinutes = timeStrToMinutes(TIME_RANGE.to) ?? 16 * 60;
+  const filteredSlots = slots.filter(slot => {
+    const d = new Date(slot.start);
+    const slotMinutes = d.getHours() * 60 + d.getMinutes();
+    if (slotMinutes < fixedFromMinutes) return false;
+    if (slotMinutes > fixedToMinutes) return false;
+    return true;
+  });
+
+  useEffect(() => {
+    if (!selectedSlot) return;
+    const stillVisible = filteredSlots.some(s => s.start === selectedSlot.start && s.end === selectedSlot.end);
+    if (!stillVisible) setSelectedSlot(null);
+  }, [filteredSlots, selectedSlot]);
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#ffffff", fontFamily: "'DM Sans', sans-serif" }}>
@@ -389,11 +413,14 @@ export default function BookingPage() {
               <>
                 <p style={{ fontSize: 12, fontWeight: 600, color: "#2b7aab", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Available Times</p>
                 <p style={{ fontSize: 13, color: "#7a8fa0", marginBottom: 16 }}>{formatDisplayDate(selectedDate)}</p>
-                {slots.length === 0 ? (
-                  <p style={{ color: "#7a8fa0", fontSize: 14, padding: "16px 0" }}>No available slots for this day.</p>
+                <p style={{ color: "#7a8fa0", fontSize: 12, marginBottom: 12 }}>
+                  Showing slots between {TIME_RANGE.from} and {TIME_RANGE.to}.
+                </p>
+                {filteredSlots.length === 0 ? (
+                  <p style={{ color: "#7a8fa0", fontSize: 14, padding: "16px 0" }}>No available slots for this time range.</p>
                 ) : (
                   <div className="slots-grid">
-                    {slots.map((slot, i) => (
+                    {filteredSlots.map((slot, i) => (
                       <button
                         key={i}
                         className={`slot-btn ${selectedSlot === slot ? "selected" : ""}`}
