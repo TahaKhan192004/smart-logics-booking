@@ -115,7 +115,7 @@ export default function BookingPage() {
     try {
       const start = toLocalISO(selectedSlot.start);
       const end = toLocalISO(selectedSlot.end);
-      const url = `${API_BASE}/calendar/book?client_name=${encodeURIComponent(form.name)}&client_email=${encodeURIComponent(form.email)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&purpose=${encodeURIComponent(form.purpose)}&user_input=${encodeURIComponent(form.userInput)}`;
+      const url = `${API_BASE}/calendar/book?client_name=${encodeURIComponent(form.name)}&client_email=${encodeURIComponent(form.email)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&purpose=${encodeURIComponent(form.purpose)}&user_input=${encodeURIComponent(form.userInput)}&contact_number=${encodeURIComponent(form.contact_number)}`;
       const res = await fetch(url, { method: "POST" });
       if (!res.ok) throw new Error("Booking failed");
       const data = await res.json();
