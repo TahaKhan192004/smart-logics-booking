@@ -17,8 +17,8 @@ const PURPOSES = [
 
 const PURPOSE_PLACEHOLDERS: Record<string, string> = {
   "Client Consultation": "Briefly describe the project — goals, tech stack, timeline, budget...",
-  "Technical Interview": "Paste the job position, required skills, experience level...",
-  "HR Interview": "Any notes about the candidate or role...",
+  "Technical Interview": "What position are you applying for",
+  "HR Interview": "What position are you applying for",
   "General Discussion": "What would you like to discuss?",
   "Support Call": "Describe the problem you're facing — what happened, what you tried...",
   "Sales Demo / Partnership Discussion": "Describe the service or product you're presenting, and the prospect...",
@@ -26,8 +26,8 @@ const PURPOSE_PLACEHOLDERS: Record<string, string> = {
 
 const PURPOSE_LABELS: Record<string, string> = {
   "Client Consultation": "Project Info",
-  "Technical Interview": "Position & Requirements",
-  "HR Interview": "Notes (optional)",
+  "Technical Interview": "Position Applied For",
+  "HR Interview": "Position Applied For",
   "General Discussion": "Context (optional)",
   "Support Call": "Problem Description",
   "Sales Demo / Partnership Discussion": "Service / Context",
