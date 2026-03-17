@@ -492,7 +492,7 @@ export default function AdminPage() {
 
   const saveNote = async (meetingId: string, note: string) => {
     try {
-      const res = await fetch("/api/meetings/note", {
+      const res = await fetch("/apis/meetings/note", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ meeting_id: meetingId, note }),

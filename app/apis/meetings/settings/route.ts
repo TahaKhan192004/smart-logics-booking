@@ -21,7 +21,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// GET /api/meetings/settings
+// GET /apis/meetings/settings
 export async function GET() {
   const { data, error } = await supabase
     .from("meeting_settings")

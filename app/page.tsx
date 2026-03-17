@@ -33,8 +33,6 @@ const PURPOSE_LABELS: Record<string, string> = {
   "Sales Demo / Partnership Discussion": "Service / Context",
 };
 
-const TIME_RANGE = { from: "13:00", to: "16:00" };
-
 function formatDisplayDate(dateStr: string) {
   const d = new Date(dateStr + "T00:00:00");
   return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
@@ -69,6 +67,9 @@ export default function BookingPage() {
   const [booking, setBooking] = useState(false);
   const [modal, setModal] = useState<{ meetLink: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [timeRange, setTimeRange] = useState<{ from: string; to: string } | null>(null);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
 
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
@@ -95,6 +96,32 @@ export default function BookingPage() {
     const d = new Date(currentYear, currentMonth, day);
     return d.getDay() === 0 || d.getDay() === 6;
   };
+
+  useEffect(() => {
+    let isActive = true;
+    const loadSettings = async () => {
+      setLoadingSettings(true);
+      setSettingsError(null);
+      try {
+        const res = await fetch("/apis/meetings/settings");
+        if (!res.ok) throw new Error("Failed to load meeting settings");
+        const data = await res.json();
+        if (!data?.start_time || !data?.end_time) throw new Error("Invalid meeting settings");
+        if (!isActive) return;
+        setTimeRange({ from: data.start_time, to: data.end_time });
+      } catch {
+        if (!isActive) return;
+        setSettingsError("Failed to load meeting settings.");
+        setTimeRange(null);
+      } finally {
+        if (isActive) setLoadingSettings(false);
+      }
+    };
+    loadSettings();
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const handleDateClick = async (day: number) => {
     if (isPast(day) || isWeekend(day)) return;
@@ -145,9 +172,10 @@ export default function BookingPage() {
 
   const canBook = !booking && form.name && form.email && form.purpose;
 
-  const fixedFromMinutes = timeStrToMinutes(TIME_RANGE.from) ?? 13 * 60;
-  const fixedToMinutes = timeStrToMinutes(TIME_RANGE.to) ?? 16 * 60;
+  const fixedFromMinutes = timeRange ? timeStrToMinutes(timeRange.from) : null;
+  const fixedToMinutes = timeRange ? timeStrToMinutes(timeRange.to) : null;
   const filteredSlots = slots.filter(slot => {
+    if (fixedFromMinutes === null || fixedToMinutes === null) return true;
     const d = new Date(slot.start);
     const slotMinutes = d.getHours() * 60 + d.getMinutes();
     if (slotMinutes < fixedFromMinutes) return false;
@@ -413,9 +441,15 @@ export default function BookingPage() {
               <>
                 <p style={{ fontSize: 12, fontWeight: 600, color: "#2b7aab", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Available Times</p>
                 <p style={{ fontSize: 13, color: "#7a8fa0", marginBottom: 16 }}>{formatDisplayDate(selectedDate)}</p>
-                <p style={{ color: "#7a8fa0", fontSize: 12, marginBottom: 12 }}>
-                  Showing slots between {TIME_RANGE.from} and {TIME_RANGE.to}.
-                </p>
+                {loadingSettings ? (
+                  <p style={{ color: "#7a8fa0", fontSize: 12, marginBottom: 12 }}>Loading meeting settings...</p>
+                ) : settingsError ? (
+                  <p style={{ color: "#e05252", fontSize: 12, marginBottom: 12 }}>{settingsError}</p>
+                ) : timeRange ? (
+                  <p style={{ color: "#7a8fa0", fontSize: 12, marginBottom: 12 }}>
+                    Showing slots between {timeRange.from} and {timeRange.to}.
+                  </p>
+                ) : null}
                 {filteredSlots.length === 0 ? (
                   <p style={{ color: "#7a8fa0", fontSize: 14, padding: "16px 0" }}>No available slots for this time range.</p>
                 ) : (
