@@ -21,7 +21,31 @@ type Meeting = {
   note?: string;
 };
 
+type DaySetting = {
+  day: string;
+  enabled: boolean;
+  start_time: string;
+  end_time: string;
+};
+
+type DateOverride = {
+  date: string; // YYYY-MM-DD
+  enabled: boolean;
+  start_time: string;
+  end_time: string;
+};
+
 type Tab = "today" | "upcoming" | "past";
+
+const DAYS_ORDER = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+const DAY_LABELS: Record<string, string> = {
+  monday: "Monday", tuesday: "Tuesday", wednesday: "Wednesday",
+  thursday: "Thursday", friday: "Friday", saturday: "Saturday", sunday: "Sunday",
+};
+const DAY_SHORT: Record<string, string> = {
+  monday: "Mon", tuesday: "Tue", wednesday: "Wed",
+  thursday: "Thu", friday: "Fri", saturday: "Sat", sunday: "Sun",
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function parseTime(iso: string) {
@@ -52,12 +76,8 @@ function isToday(iso: string) {
   const now = new Date();
   return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
 }
-function isPast(iso: string) {
-  return parseTime(iso) < new Date() && !isToday(iso);
-}
-function isUpcoming(iso: string) {
-  return parseTime(iso) > new Date() && !isToday(iso);
-}
+function isPast(iso: string) { return parseTime(iso) < new Date() && !isToday(iso); }
+function isUpcoming(iso: string) { return parseTime(iso) > new Date() && !isToday(iso); }
 
 function renderMarkdown(md: string): string {
   return md
@@ -73,11 +93,11 @@ function renderMarkdown(md: string): string {
 }
 
 const PURPOSE_ICONS: Record<string, React.ReactNode> = {
-  "Client Consultation": <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>,
-  "Technical Interview": <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>,
-  "HR Interview": <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>,
-  "General Discussion": <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
-  "Support Call": <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.12 1.18 2 2 0 012.1 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>,
+  "Client Consultation":              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>,
+  "Technical Interview":              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>,
+  "HR Interview":                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>,
+  "General Discussion":               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
+  "Support Call":                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.12 1.18 2 2 0 012.1 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>,
   "Sales Demo / Partnership Discussion": <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
 };
 
@@ -92,12 +112,10 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   const [input, setInput] = useState("");
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
-
   const handleSubmit = () => {
     if (input === ADMIN_PASSWORD) { onUnlock(); }
     else { setError(true); setShake(true); setTimeout(() => setShake(false), 400); }
   };
-
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", padding: 16 }}>
       <style>{`
@@ -105,11 +123,9 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
         @keyframes shake { 0%,100%{transform:translateX(0)} 25%,75%{transform:translateX(-6px)} 50%{transform:translateX(6px)} }
         .shake { animation: shake 0.35s ease; }
       `}</style>
-      <div className={shake ? "shake" : ""} style={{ background: "#fff", borderRadius: 16, padding: "40px 32px", width: "100%", maxWidth: 360, boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.08)", border: "1px solid #e2e8f0", textAlign: "center" }}>
+      <div className={shake ? "shake" : ""} style={{ background: "#fff", borderRadius: 16, padding: "40px 32px", width: "100%", maxWidth: 360, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 8px 32px rgba(0,0,0,0.08)", border: "1px solid #e2e8f0", textAlign: "center" }}>
         <div style={{ width: 44, height: 44, background: "#0f172a", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
-          </svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
         </div>
         <h1 style={{ fontFamily: "'Instrument Serif', serif", fontSize: 22, color: "#0f172a", marginBottom: 6, fontWeight: 400 }}>Admin Access</h1>
         <p style={{ color: "#94a3b8", fontSize: 13, marginBottom: 28 }}>Smart Logics Solution</p>
@@ -119,10 +135,509 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
           style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${error ? "#fca5a5" : "#e2e8f0"}`, borderRadius: 8, fontSize: 14, color: "#0f172a", outline: "none", fontFamily: "inherit", background: error ? "#fef2f2" : "#f8fafc", letterSpacing: 4, textAlign: "center", marginBottom: 8 }}
         />
         {error && <p style={{ color: "#ef4444", fontSize: 12, marginBottom: 12 }}>Incorrect password</p>}
-        <button onClick={handleSubmit} style={{ width: "100%", padding: "11px", background: "#0f172a", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: error ? 0 : 8 }}>
+        <button onClick={handleSubmit} style={{ width: "100%", padding: 11, background: "#0f172a", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: error ? 0 : 8 }}>
           Continue
         </button>
       </div>
+    </div>
+  );
+}
+
+// ─── Toggle ───────────────────────────────────────────────────────────────────
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div onClick={() => onChange(!checked)}
+      style={{ width: 36, height: 20, borderRadius: 10, background: checked ? "#0f172a" : "#e2e8f0", cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+      <div style={{ position: "absolute", top: 2, left: checked ? 18 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+    </div>
+  );
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function toDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+function getDayName(date: Date): string {
+  return ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][date.getDay()];
+}
+function calcSlots(start: string, end: string): number {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  return Math.floor(((eh * 60 + em) - (sh * 60 + sm)) / 30);
+}
+
+// ─── Day Edit Popover ─────────────────────────────────────────────────────────
+function DayPopover({
+  dateKey, defaultSetting, override, onSave, onRemoveOverride, onClose,
+}: {
+  dateKey: string;
+  defaultSetting: DaySetting | null;
+  override: DateOverride | null;
+  onSave: (o: DateOverride) => Promise<void>;
+  onRemoveOverride: (date: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const base = override ?? {
+    date: dateKey,
+    enabled: defaultSetting?.enabled ?? true,
+    start_time: defaultSetting?.start_time ?? "09:00",
+    end_time: defaultSetting?.end_time ?? "17:00",
+  };
+  const [enabled, setEnabled] = useState(base.enabled);
+  const [startTime, setStartTime] = useState(base.start_time);
+  const [endTime, setEndTime] = useState(base.end_time);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const isOverridden = !!override;
+  const slots = enabled && startTime < endTime ? calcSlots(startTime, endTime) : 0;
+
+  const displayDate = new Date(dateKey + "T00:00:00").toLocaleDateString("en-US", {
+    weekday: "long", month: "long", day: "numeric",
+  });
+
+  const handleSave = async () => {
+    if (enabled && startTime >= endTime) { setError("Start must be before end"); return; }
+    setSaving(true); setError("");
+    await onSave({ date: dateKey, enabled, start_time: startTime, end_time: endTime });
+    setSaving(false);
+    onClose();
+  };
+
+  const handleRemove = async () => {
+    setSaving(true);
+    await onRemoveOverride(dateKey);
+    setSaving(false);
+    onClose();
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: 16, backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: 14, width: "100%", maxWidth: 360, boxShadow: "0 20px 50px rgba(0,0,0,0.15)", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div style={{ padding: "16px 20px 14px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{displayDate}</p>
+            <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+              {isOverridden
+                ? <span style={{ color: "#6366f1", fontWeight: 500 }}>Custom override active</span>
+                : defaultSetting ? `Default: ${DAY_LABELS[defaultSetting.day]}` : "No default set"}
+            </p>
+          </div>
+          <button onClick={onClose} style={{ width: 26, height: 26, borderRadius: 6, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b", flexShrink: 0 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Enable toggle */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: "#374151" }}>Available this day</span>
+            <Toggle checked={enabled} onChange={setEnabled} />
+          </div>
+
+          {/* Time pickers */}
+          {enabled && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {[
+                { label: "Start", value: startTime, onChange: setStartTime },
+                { label: "End",   value: endTime,   onChange: setEndTime },
+              ].map(({ label, value, onChange }) => (
+                <div key={label}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.7, marginBottom: 5 }}>{label}</p>
+                  <input type="time" value={value} onChange={e => { onChange(e.target.value); setError(""); }}
+                    style={{ width: "100%", padding: "8px 10px", border: "1px solid #e2e8f0", borderRadius: 7, fontSize: 13, color: "#0f172a", outline: "none", fontFamily: "inherit", background: "#fff" }}
+                    onFocus={e => { e.target.style.borderColor = "#6366f1"; }}
+                    onBlur={e => { e.target.style.borderColor = "#e2e8f0"; }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Slot count preview */}
+          {enabled && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: slots > 0 ? "#f0fdf4" : "#fef2f2", borderRadius: 7, border: `1px solid ${slots > 0 ? "#bbf7d0" : "#fecaca"}` }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={slots > 0 ? "#16a34a" : "#dc2626"} strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span style={{ fontSize: 12, fontWeight: 500, color: slots > 0 ? "#16a34a" : "#dc2626" }}>
+                {slots > 0 ? `${slots} slot${slots !== 1 ? "s" : ""} available` : "Invalid time range"}
+              </span>
+            </div>
+          )}
+
+          {error && <p style={{ fontSize: 12, color: "#ef4444" }}>{error}</p>}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "12px 20px 16px", display: "flex", gap: 8, justifyContent: "flex-end", borderTop: "1px solid #f1f5f9" }}>
+          {isOverridden && (
+            <button onClick={handleRemove} disabled={saving}
+              style={{ padding: "7px 14px", background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginRight: "auto" }}>
+              Reset to default
+            </button>
+          )}
+          <button onClick={onClose} style={{ padding: "7px 14px", background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0", borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+          <button onClick={handleSave} disabled={saving}
+            style={{ padding: "7px 16px", background: saving ? "#94a3b8" : "#0f172a", color: "#fff", border: "none", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Settings Modal (Calendar view) ──────────────────────────────────────────
+function SettingsModal({ onClose }: { onClose: () => void }) {
+  const today = new Date();
+  const [viewYear,  setViewYear]  = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth()); // 0-based
+
+  // Weekly defaults
+  const [weeklyDefaults, setWeeklyDefaults] = useState<DaySetting[]>([]);
+  // Per-date overrides for the displayed month, keyed by YYYY-MM-DD
+  const [overrides, setOverrides] = useState<Record<string, DateOverride>>({});
+
+  const [loadingDefaults,  setLoadingDefaults]  = useState(true);
+  const [loadingOverrides, setLoadingOverrides] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  // Active tab: "calendar" | "defaults"
+  const [activeTab, setActiveTab] = useState<"calendar" | "defaults">("calendar");
+
+  // Defaults editor state
+  const [editDays, setEditDays] = useState<DaySetting[]>([]);
+  const [savingDefaults, setSavingDefaults] = useState(false);
+  const [savedDefaults,  setSavedDefaults]  = useState(false);
+  const [defaultsError,  setDefaultsError]  = useState("");
+
+  // ── Load weekly defaults ──────────────────────────────────────────────────
+  useEffect(() => {
+    fetch("/api/meetings/settings")
+      .then(r => r.json())
+      .then(data => { setWeeklyDefaults(data); setEditDays(data); })
+      .catch(() => setDefaultsError("Failed to load defaults"))
+      .finally(() => setLoadingDefaults(false));
+  }, []);
+
+  // ── Load overrides for current view month ────────────────────────────────
+  const loadOverrides = (year: number, month: number) => {
+    setLoadingOverrides(true);
+    fetch(`/api/meetings/date-overrides?year=${year}&month=${month + 1}`)
+      .then(r => r.json())
+      .then((data: DateOverride[]) => {
+        const map: Record<string, DateOverride> = {};
+        data.forEach(o => { map[o.date] = o; });
+        setOverrides(map);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingOverrides(false));
+  };
+
+  useEffect(() => { loadOverrides(viewYear, viewMonth); }, [viewYear, viewMonth]);
+
+  // ── Calendar navigation ───────────────────────────────────────────────────
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
+    else setViewMonth(m => m - 1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
+    else setViewMonth(m => m + 1);
+  };
+
+  // ── Build calendar grid ───────────────────────────────────────────────────
+  const firstDay   = new Date(viewYear, viewMonth, 1);
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  // Start on Monday (0=Mon … 6=Sun)
+  const startOffset = (firstDay.getDay() + 6) % 7;
+
+  // ── Save / remove override ────────────────────────────────────────────────
+  const saveOverride = async (o: DateOverride) => {
+    await fetch("/api/meetings/date-overrides", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(o),
+    });
+    setOverrides(prev => ({ ...prev, [o.date]: o }));
+  };
+
+  const removeOverride = async (date: string) => {
+    await fetch(`/api/meetings/date-overrides?date=${date}`, { method: "DELETE" });
+    setOverrides(prev => { const next = { ...prev }; delete next[date]; return next; });
+  };
+
+  // ── Save weekly defaults ──────────────────────────────────────────────────
+  const updateEditDay = (day: string, field: keyof DaySetting, value: string | boolean) => {
+    setEditDays(prev => prev.map(d => d.day === day ? { ...d, [field]: value } : d));
+    setSavedDefaults(false); setDefaultsError("");
+  };
+  const saveDefaults = async () => {
+    for (const d of editDays) {
+      if (d.enabled && d.start_time >= d.end_time) {
+        setDefaultsError(`${DAY_LABELS[d.day]}: start must be before end`); return;
+      }
+    }
+    setSavingDefaults(true); setDefaultsError("");
+    try {
+      const res = await fetch("/api/meetings/settings", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editDays),
+      });
+      if (!res.ok) throw new Error();
+      setWeeklyDefaults(editDays);
+      setSavedDefaults(true); setTimeout(() => setSavedDefaults(false), 2500);
+    } catch { setDefaultsError("Failed to save defaults"); }
+    finally { setSavingDefaults(false); }
+  };
+
+  // ── Cell rendering ────────────────────────────────────────────────────────
+  const WEEK_HEADERS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const todayKey = toDateKey(today);
+
+  const getCellState = (dateNum: number) => {
+    const d = new Date(viewYear, viewMonth, dateNum);
+    const key = toDateKey(d);
+    const dayName = getDayName(d);
+    const override = overrides[key];
+    const def = weeklyDefaults.find(w => w.day === dayName) ?? null;
+    const isAvailable = override ? override.enabled : (def?.enabled ?? false);
+    const hasOverride = !!override;
+    return { key, isAvailable, hasOverride, override, def, isToday: key === todayKey, isPast: d < today && key !== todayKey };
+  };
+
+  const selectedOverride = selectedDate ? overrides[selectedDate] ?? null : null;
+  const selectedDateObj   = selectedDate ? new Date(selectedDate + "T00:00:00") : null;
+  const selectedDefault   = selectedDateObj ? weeklyDefaults.find(w => w.day === getDayName(selectedDateObj)) ?? null : null;
+
+  const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const overrideCount = Object.keys(overrides).length;
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16, backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 640, maxHeight: "92vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 60px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
+
+        {/* ── Header ── */}
+        <div style={{ padding: "18px 24px 0", flexShrink: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <div>
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", marginBottom: 2 }}>Availability</h3>
+              <p style={{ fontSize: 12, color: "#94a3b8" }}>
+                {overrideCount > 0
+                  ? `${overrideCount} custom day${overrideCount !== 1 ? "s" : ""} this month`
+                  : "Using weekly defaults"}
+              </p>
+            </div>
+            <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: 4, background: "#f1f5f9", padding: 4, borderRadius: 9, width: "fit-content" }}>
+            {([["calendar", "Calendar"], ["defaults", "Weekly Defaults"]] as const).map(([key, label]) => (
+              <button key={key} onClick={() => setActiveTab(key)}
+                style={{ padding: "7px 16px", borderRadius: 6, fontSize: 13, fontWeight: activeTab === key ? 600 : 500, cursor: "pointer", border: "none", background: activeTab === key ? "#fff" : "transparent", color: activeTab === key ? "#0f172a" : "#64748b", boxShadow: activeTab === key ? "0 1px 3px rgba(0,0,0,0.08)" : "none", fontFamily: "inherit", transition: "all 0.15s" }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Body ── */}
+        <div style={{ overflowY: "auto", flex: 1, padding: "16px 24px 0" }}>
+
+          {/* ── CALENDAR TAB ── */}
+          {activeTab === "calendar" && (
+            <div>
+              {/* Month nav */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <button onClick={prevMonth} style={{ width: 30, height: 30, borderRadius: 7, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#374151" }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{monthLabel}</span>
+                <button onClick={nextMonth} style={{ width: 30, height: 30, borderRadius: 7, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#374151" }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+
+              {/* Weekday headers */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 6 }}>
+                {WEEK_HEADERS.map(h => (
+                  <div key={h} style={{ textAlign: "center", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.6, padding: "4px 0" }}>{h}</div>
+                ))}
+              </div>
+
+              {/* Calendar grid */}
+              {loadingOverrides || loadingDefaults ? (
+                <div style={{ textAlign: "center", padding: "40px 0", color: "#94a3b8", fontSize: 13 }}>
+                  <div style={{ width: 22, height: 22, border: "2px solid #e2e8f0", borderTopColor: "#6366f1", borderRadius: "50%", margin: "0 auto 10px", animation: "spin 0.8s linear infinite" }} />
+                  Loading calendar...
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+                  {/* Empty cells before month start */}
+                  {Array.from({ length: startOffset }).map((_, i) => <div key={`e${i}`} />)}
+
+                  {/* Day cells */}
+                  {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
+                    const { key, isAvailable, hasOverride, isPast, isToday: isTod } = getCellState(day);
+                    const isSelected = selectedDate === key;
+
+                    let cellBg = isAvailable ? "#f0fdf4" : "#fef2f2";
+                    let cellBorder = isAvailable ? "#bbf7d0" : "#fecaca";
+                    let numColor = isAvailable ? "#166534" : "#991b1b";
+                    if (isPast)     { cellBg = "#f8fafc"; cellBorder = "#e2e8f0"; numColor = "#cbd5e1"; }
+                    if (isSelected) { cellBg = "#eef2ff"; cellBorder = "#6366f1"; numColor = "#4338ca"; }
+                    if (isTod && !isSelected) { cellBorder = "#6366f1"; }
+
+                    return (
+                      <button key={key} onClick={() => setSelectedDate(isSelected ? null : key)}
+                        style={{ position: "relative", aspectRatio: "1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 8, border: `1.5px solid ${cellBorder}`, background: cellBg, cursor: isPast ? "default" : "pointer", transition: "all 0.1s", padding: 0, fontFamily: "inherit" }}>
+                        <span style={{ fontSize: 13, fontWeight: isTod ? 700 : 500, color: numColor, lineHeight: 1 }}>{day}</span>
+                        {hasOverride && !isPast && (
+                          <div style={{ position: "absolute", top: 4, right: 4, width: 5, height: 5, borderRadius: "50%", background: "#6366f1" }} />
+                        )}
+                        {!isPast && (
+                          <span style={{ fontSize: 9, color: isSelected ? "#6366f1" : isAvailable ? "#16a34a" : "#dc2626", marginTop: 2, fontWeight: 500 }}>
+                            {isAvailable ? "on" : "off"}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Legend */}
+              <div style={{ display: "flex", gap: 14, marginTop: 14, flexWrap: "wrap" }}>
+                {[
+                  { color: "#bbf7d0", bg: "#f0fdf4", label: "Available" },
+                  { color: "#fecaca", bg: "#fef2f2", label: "Unavailable" },
+                  { color: "#6366f1", bg: "#eef2ff", label: "Selected" },
+                ].map(({ color, bg, label }) => (
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <div style={{ width: 12, height: 12, borderRadius: 3, background: bg, border: `1.5px solid ${color}` }} />
+                    <span style={{ fontSize: 11, color: "#94a3b8" }}>{label}</span>
+                  </div>
+                ))}
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ position: "relative", width: 12, height: 12, borderRadius: 3, background: "#f0fdf4", border: "1.5px solid #bbf7d0" }}>
+                    <div style={{ position: "absolute", top: 1, right: 1, width: 4, height: 4, borderRadius: "50%", background: "#6366f1" }} />
+                  </div>
+                  <span style={{ fontSize: 11, color: "#94a3b8" }}>Custom override</span>
+                </div>
+              </div>
+              <p style={{ fontSize: 11, color: "#cbd5e1", marginTop: 8, marginBottom: 4 }}>Click any future date to edit its availability</p>
+            </div>
+          )}
+
+          {/* ── DEFAULTS TAB ── */}
+          {activeTab === "defaults" && (
+            <div>
+              <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 14 }}>
+                These apply to any date without a custom override.
+              </p>
+              {loadingDefaults ? (
+                <div style={{ textAlign: "center", padding: "30px 0", color: "#94a3b8", fontSize: 13 }}>
+                  <div style={{ width: 22, height: 22, border: "2px solid #e2e8f0", borderTopColor: "#6366f1", borderRadius: "50%", margin: "0 auto 10px", animation: "spin 0.8s linear infinite" }} />
+                  Loading...
+                </div>
+              ) : (
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      {["Day","Active","Start","End","Slots"].map(h => (
+                        <th key={h} style={{ padding: "8px 10px", textAlign: h === "Active" ? "center" : "left", fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.7 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {editDays.map((d, i) => {
+                      const slots = d.enabled && d.start_time < d.end_time ? calcSlots(d.start_time, d.end_time) : 0;
+                      return (
+                        <tr key={d.day} style={{ borderBottom: i < editDays.length - 1 ? "1px solid #f8fafc" : "none", background: d.enabled ? "#fff" : "#fafafa" }}>
+                          <td style={{ padding: "12px 10px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                              <div style={{ width: 26, height: 26, borderRadius: 6, background: d.enabled ? "#0f172a" : "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <span style={{ fontSize: 9, fontWeight: 700, color: d.enabled ? "#fff" : "#94a3b8" }}>{DAY_SHORT[d.day]}</span>
+                              </div>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: d.enabled ? "#0f172a" : "#94a3b8" }}>{DAY_LABELS[d.day]}</span>
+                            </div>
+                          </td>
+                          <td style={{ padding: "12px 10px", textAlign: "center" }}>
+                            <Toggle checked={d.enabled} onChange={v => updateEditDay(d.day, "enabled", v)} />
+                          </td>
+                          <td style={{ padding: "12px 10px" }}>
+                            <input type="time" value={d.start_time} disabled={!d.enabled}
+                              onChange={e => updateEditDay(d.day, "start_time", e.target.value)}
+                              style={{ padding: "6px 9px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 12, color: d.enabled ? "#0f172a" : "#cbd5e1", outline: "none", fontFamily: "inherit", background: d.enabled ? "#f8fafc" : "#f1f5f9", cursor: d.enabled ? "text" : "not-allowed", width: 100 }}
+                              onFocus={e => { if (d.enabled) e.target.style.borderColor = "#6366f1"; }}
+                              onBlur={e => { e.target.style.borderColor = "#e2e8f0"; }}
+                            />
+                          </td>
+                          <td style={{ padding: "12px 10px" }}>
+                            <input type="time" value={d.end_time} disabled={!d.enabled}
+                              onChange={e => updateEditDay(d.day, "end_time", e.target.value)}
+                              style={{ padding: "6px 9px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 12, color: d.enabled ? "#0f172a" : "#cbd5e1", outline: "none", fontFamily: "inherit", background: d.enabled ? "#f8fafc" : "#f1f5f9", cursor: d.enabled ? "text" : "not-allowed", width: 100 }}
+                              onFocus={e => { if (d.enabled) e.target.style.borderColor = "#6366f1"; }}
+                              onBlur={e => { e.target.style.borderColor = "#e2e8f0"; }}
+                            />
+                          </td>
+                          <td style={{ padding: "12px 10px" }}>
+                            {d.enabled && slots > 0
+                              ? <span style={{ fontSize: 11, fontWeight: 600, color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "2px 7px", borderRadius: 4 }}>{slots} slots</span>
+                              : d.enabled
+                                ? <span style={{ fontSize: 11, color: "#ef4444" }}>Invalid</span>
+                                : <span style={{ fontSize: 11, color: "#cbd5e1" }}>Off</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ── Footer ── */}
+        <div style={{ padding: "14px 24px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+          <p style={{ fontSize: 11, color: "#94a3b8" }}>
+            {activeTab === "calendar" ? "Purple dot = custom override active" : "Changes apply to future bookings"}
+          </p>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {activeTab === "defaults" && savedDefaults && (
+              <span style={{ fontSize: 12, color: "#16a34a", display: "flex", alignItems: "center", gap: 4 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Saved
+              </span>
+            )}
+            {activeTab === "defaults" && defaultsError && (
+              <span style={{ fontSize: 12, color: "#ef4444" }}>{defaultsError}</span>
+            )}
+            <button onClick={onClose} style={{ padding: "8px 16px", background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0", borderRadius: 7, fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>Close</button>
+            {activeTab === "defaults" && (
+              <button onClick={saveDefaults} disabled={savingDefaults || loadingDefaults}
+                style={{ padding: "8px 18px", background: savingDefaults ? "#94a3b8" : "#0f172a", color: "#fff", border: "none", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: savingDefaults ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+                {savingDefaults ? "Saving..." : "Save Defaults"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Day popover */}
+      {selectedDate && (
+        <DayPopover
+          dateKey={selectedDate}
+          defaultSetting={selectedDefault}
+          override={selectedOverride}
+          onSave={saveOverride}
+          onRemoveOverride={removeOverride}
+          onClose={() => setSelectedDate(null)}
+        />
+      )}
     </div>
   );
 }
@@ -132,14 +647,12 @@ function NoteModal({ meeting, onClose, onSave }: { meeting: Meeting; onClose: ()
   const [text, setText] = useState(meeting.note || "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-
   const handleSave = async () => {
     setSaving(true);
     await onSave(meeting.id, text);
     setSaving(false); setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
-
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16, backdropFilter: "blur(4px)" }} onClick={onClose}>
       <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 520, boxShadow: "0 24px 60px rgba(0,0,0,0.15)", overflow: "hidden" }} onClick={e => e.stopPropagation()}>
@@ -154,8 +667,7 @@ function NoteModal({ meeting, onClose, onSave }: { meeting: Meeting; onClose: ()
         </div>
         <div style={{ padding: 24 }}>
           <textarea value={text} onChange={e => { setText(e.target.value); setSaved(false); }}
-            placeholder="Add notes, talking points, follow-ups..."
-            autoFocus
+            placeholder="Add notes, talking points, follow-ups..." autoFocus
             style={{ width: "100%", minHeight: 180, padding: "12px 14px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, color: "#0f172a", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, resize: "vertical", outline: "none", background: "#f8fafc" }}
             onFocus={e => e.target.style.borderColor = "#6366f1"}
             onBlur={e => e.target.style.borderColor = "#e2e8f0"}
@@ -163,9 +675,7 @@ function NoteModal({ meeting, onClose, onSave }: { meeting: Meeting; onClose: ()
           <p style={{ fontSize: 11, color: "#cbd5e1", marginTop: 6 }}>{text.length} characters</p>
         </div>
         <div style={{ padding: "14px 24px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
-          {saved && <span style={{ fontSize: 12, color: "#16a34a", display: "flex", alignItems: "center", gap: 4 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>Saved
-          </span>}
+          {saved && <span style={{ fontSize: 12, color: "#16a34a", display: "flex", alignItems: "center", gap: 4 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>Saved</span>}
           <button onClick={onClose} style={{ padding: "8px 16px", background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0", borderRadius: 7, fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
           <button onClick={handleSave} disabled={saving}
             style={{ padding: "8px 18px", background: saving ? "#94a3b8" : "#0f172a", color: "#fff", border: "none", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
@@ -209,105 +719,6 @@ function ContextModal({ meeting, onClose }: { meeting: Meeting; onClose: () => v
   );
 }
 
-// ─── Settings Modal ───────────────────────────────────────────────────────────
-function SettingsModal({ onClose }: { onClose: () => void }) {
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    fetch("/apis/meetings/settings")
-      .then(r => r.json())
-      .then(d => { setStartTime(d.start_time || "09:00"); setEndTime(d.end_time || "17:00"); })
-      .catch(() => setError("Failed to load settings"))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleSave = async () => {
-    if (!startTime || !endTime) return;
-    if (startTime >= endTime) { setError("Start time must be before end time"); return; }
-    setSaving(true); setError("");
-    try {
-      const res = await fetch("/apis/meetings/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ start_time: startTime, end_time: endTime }),
-      });
-      if (!res.ok) throw new Error();
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } catch {
-      setError("Failed to save settings");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16, backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 420, boxShadow: "0 24px 60px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
-        <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", marginBottom: 2 }}>Availability Settings</h3>
-            <p style={{ fontSize: 12, color: "#94a3b8" }}>Configure your bookable time range</p>
-          </div>
-          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-        <div style={{ padding: 24 }}>
-          {loading ? (
-            <div style={{ textAlign: "center", padding: "24px 0", color: "#94a3b8", fontSize: 13 }}>Loading...</div>
-          ) : (
-            <>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#374151", marginBottom: 6 }}>Start Time</label>
-                  <input type="time" value={startTime} onChange={e => { setStartTime(e.target.value); setSaved(false); setError(""); }}
-                    style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, color: "#0f172a", outline: "none", fontFamily: "inherit", background: "#f8fafc" }}
-                    onFocus={e => e.target.style.borderColor = "#6366f1"}
-                    onBlur={e => e.target.style.borderColor = "#e2e8f0"}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#374151", marginBottom: 6 }}>End Time</label>
-                  <input type="time" value={endTime} onChange={e => { setEndTime(e.target.value); setSaved(false); setError(""); }}
-                    style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, color: "#0f172a", outline: "none", fontFamily: "inherit", background: "#f8fafc" }}
-                    onFocus={e => e.target.style.borderColor = "#6366f1"}
-                    onBlur={e => e.target.style.borderColor = "#e2e8f0"}
-                  />
-                </div>
-              </div>
-              {startTime && endTime && startTime < endTime && (
-                <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#166534", marginBottom: 16 }}>
-                  Slots from <strong>{startTime}</strong> to <strong>{endTime}</strong> — 30-min intervals
-                </div>
-              )}
-              {error && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#991b1b", marginBottom: 16 }}>{error}</div>}
-              <div style={{ background: "#f8fafc", borderRadius: 8, padding: "12px 14px", fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>
-                <strong style={{ color: "#374151" }}>Note:</strong> Changes apply to new bookings only. Existing meetings are not affected.
-              </div>
-            </>
-          )}
-        </div>
-        <div style={{ padding: "14px 24px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
-          {saved && <span style={{ fontSize: 12, color: "#16a34a", display: "flex", alignItems: "center", gap: 4 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>Saved
-          </span>}
-          <button onClick={onClose} style={{ padding: "8px 16px", background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0", borderRadius: 7, fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-          <button onClick={handleSave} disabled={saving || loading}
-            style={{ padding: "8px 18px", background: saving ? "#94a3b8" : "#0f172a", color: "#fff", border: "none", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Meeting Card ─────────────────────────────────────────────────────────────
 function MeetingCard({ meeting, onUpdateStatus, onSendReminder, onOpenNote, onOpenContext, updatingId, reminderSentId }: {
   meeting: Meeting;
@@ -322,44 +733,33 @@ function MeetingCard({ meeting, onUpdateStatus, onSendReminder, onOpenNote, onOp
   const until = timeUntil(meeting.start_time);
   const isUpdating = updatingId === meeting.google_event_id;
   const reminderSent = reminderSentId === meeting.google_event_id;
-  const purposeIcon = PURPOSE_ICONS[meeting.purpose];
 
   return (
-    <div
-      style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: "16px 20px", transition: "box-shadow 0.15s, border-color 0.15s" }}
+    <div className="meeting-card" style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: "16px 20px", transition: "box-shadow 0.15s, border-color 0.15s" }}
       onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "#cbd5e1"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)"; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "#e2e8f0"; (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}
-    >
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "#e2e8f0"; (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}>
+      <div className="meeting-row" style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
         {/* Time block */}
-        <div style={{ minWidth: 60, textAlign: "center", paddingTop: 2, flexShrink: 0 }}>
+        <div className="meeting-time" style={{ minWidth: 60, textAlign: "center", paddingTop: 2, flexShrink: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{formatTime(meeting.start_time)}</div>
           <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 1 }}>{formatTime(meeting.end_time)}</div>
           {until && meeting.status === "upcoming" && (
             <div style={{ fontSize: 10, color: "#6366f1", fontWeight: 600, marginTop: 5, background: "#eef2ff", padding: "2px 6px", borderRadius: 4, whiteSpace: "nowrap" }}>{until}</div>
           )}
         </div>
-
-        {/* Divider */}
-        <div style={{ width: 1, background: "#f1f5f9", alignSelf: "stretch", flexShrink: 0 }} />
-
+        <div className="meeting-divider" style={{ width: 1, background: "#f1f5f9", alignSelf: "stretch", flexShrink: 0 }} />
         {/* Content */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Name + badges */}
           <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6, flexWrap: "wrap" }}>
             <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{meeting.client_name}</span>
-            <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 500, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
-              {sc.label}
-            </span>
+            <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 500, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>{sc.label}</span>
             {meeting.purpose && (
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#64748b", background: "#f8fafc", border: "1px solid #e2e8f0", padding: "2px 8px", borderRadius: 4 }}>
-                <span style={{ color: "#94a3b8", display: "flex" }}>{purposeIcon}</span>
+                <span style={{ color: "#94a3b8", display: "flex" }}>{PURPOSE_ICONS[meeting.purpose]}</span>
                 {meeting.purpose}
               </span>
             )}
           </div>
-
-          {/* Meta row */}
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 12, color: "#64748b", marginBottom: 12 }}>
             <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -376,18 +776,13 @@ function MeetingCard({ meeting, onUpdateStatus, onSendReminder, onOpenNote, onOp
               {formatDateFull(meeting.start_time)}
             </span>
           </div>
-
-          {/* Note preview */}
           {meeting.note && (
-            <div onClick={() => onOpenNote(meeting)}
-              style={{ marginBottom: 12, padding: "7px 11px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 6, fontSize: 12, color: "#92400e", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+            <div onClick={() => onOpenNote(meeting)} style={{ marginBottom: 12, padding: "7px 11px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 6, fontSize: 12, color: "#92400e", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{meeting.note}</span>
             </div>
           )}
-
-          {/* Actions */}
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+          <div className="meeting-actions" style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
             <a href={meeting.meet_link} target="_blank" rel="noopener noreferrer"
               style={{ padding: "6px 12px", background: "#0f172a", color: "#fff", borderRadius: 7, fontSize: 12, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5 }}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
@@ -456,11 +851,8 @@ export default function AdminPage() {
       const res = await fetch(`${API_BASE}/meetings/getAll`);
       const data = await res.json();
       setMeetings(data.meetings || []);
-    } catch {
-      showToast("Failed to load meetings", "error");
-    } finally {
-      setLoading(false);
-    }
+    } catch { showToast("Failed to load meetings", "error"); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchMeetings(); }, [fetchMeetings]);
@@ -471,11 +863,8 @@ export default function AdminPage() {
       await fetch(`${API_BASE}/meetings/updateStatus?event_id=${encodeURIComponent(eventId)}&status=${status}`, { method: "POST" });
       setMeetings(m => m.map(x => x.google_event_id === eventId ? { ...x, status: status as Meeting["status"] } : x));
       showToast(`Status updated to ${status}`);
-    } catch {
-      showToast("Failed to update status", "error");
-    } finally {
-      setUpdatingId(null);
-    }
+    } catch { showToast("Failed to update status", "error"); }
+    finally { setUpdatingId(null); }
   };
 
   const sendReminder = async (eventId: string) => {
@@ -483,27 +872,18 @@ export default function AdminPage() {
     try {
       await fetch(`${API_BASE}/meetings/sendReminder?event_id=${encodeURIComponent(eventId)}`, { method: "POST" });
       showToast("Reminder sent!");
-    } catch {
-      showToast("Failed to send reminder", "error");
-    } finally {
-      setTimeout(() => setReminderSentId(null), 2000);
-    }
+    } catch { showToast("Failed to send reminder", "error"); }
+    finally { setTimeout(() => setReminderSentId(null), 2000); }
   };
 
   const saveNote = async (meetingId: string, note: string) => {
     try {
-      const res = await fetch("/apis/meetings/note", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ meeting_id: meetingId, note }),
-      });
+      const res = await fetch("/api/meetings/note", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ meeting_id: meetingId, note }) });
       if (!res.ok) throw new Error();
       setMeetings(m => m.map(x => x.id === meetingId ? { ...x, note } : x));
       setNoteModal(prev => prev?.id === meetingId ? { ...prev, note } : prev);
       showToast("Note saved");
-    } catch {
-      showToast("Failed to save note", "error");
-    }
+    } catch { showToast("Failed to save note", "error"); }
   };
 
   const todayMeetings    = meetings.filter(m => isToday(m.start_time));
@@ -536,32 +916,42 @@ export default function AdminPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        @keyframes fadeIn  { from { opacity: 0; transform: translateY(8px);  } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes spin    { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        .tab-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: #64748b; font-family: inherit; transition: all 0.15s; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-        .tab-btn.active { background: #fff; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-weight: 600; }
-        .tab-btn:not(.active):hover { background: #f1f5f9; color: #374151; }
-        .count-pill { font-size: 11px; padding: 1px 7px; border-radius: 20px; font-weight: 600; background: #f1f5f9; color: #94a3b8; }
-        .tab-btn.active .count-pill { color: #374151; }
-
-        .header-btn { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid #e2e8f0; background: #fff; color: #374151; font-family: inherit; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
-        .header-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
-
-        .search-wrap { position: relative; }
-        .search-wrap input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; color: #0f172a; outline: none; font-family: inherit; background: #fff; transition: border 0.15s; }
-        .search-wrap input:focus { border-color: #6366f1; }
-        .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }
-
-        .empty-state { text-align: center; padding: 60px 0; color: #94a3b8; animation: fadeIn 0.3s ease; }
-        .meetings-list { display: flex; flex-direction: column; gap: 10px; animation: fadeIn 0.25s ease; }
-
-        @media (max-width: 640px) {
-          .top-header { padding: 12px 16px !important; }
-          .main-body  { padding: 16px !important; }
-          .stats-row  { grid-template-columns: 1fr 1fr !important; }
-          .tabs-row   { flex-direction: column; align-items: stretch !important; }
+        @keyframes fadeIn  { from { opacity:0; transform:translateY(8px);  } to { opacity:1; transform:translateY(0); } }
+        @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes spin    { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+        .tab-btn { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; border:none; background:transparent; color:#64748b; font-family:inherit; transition:all 0.15s; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+        .tab-btn.active { background:#fff; color:#0f172a; box-shadow:0 1px 3px rgba(0,0,0,0.08); font-weight:600; }
+        .tab-btn:not(.active):hover { background:#f1f5f9; color:#374151; }
+        .count-pill { font-size:11px; padding:1px 7px; border-radius:20px; font-weight:600; background:#f1f5f9; color:#94a3b8; }
+        .tab-btn.active .count-pill { color:#374151; }
+        .header-btn { padding:8px 14px; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; border:1px solid #e2e8f0; background:#fff; color:#374151; font-family:inherit; transition:all 0.15s; display:inline-flex; align-items:center; gap:6px; }
+        .header-btn:hover { background:#f8fafc; border-color:#cbd5e1; }
+        .search-wrap { position:relative; }
+        .search-wrap input { width:100%; padding:9px 12px 9px 34px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; color:#0f172a; outline:none; font-family:inherit; background:#fff; transition:border 0.15s; }
+        .search-wrap input:focus { border-color:#6366f1; }
+        .search-wrap svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none; }
+        .empty-state { text-align:center; padding:60px 0; color:#94a3b8; animation:fadeIn 0.3s ease; }
+        .meetings-list { display:flex; flex-direction:column; gap:10px; animation:fadeIn 0.25s ease; }
+        @media (max-width:720px) {
+          .top-header { flex-direction: column; align-items: flex-start !important; gap: 10px; position: static !important; }
+          .header-actions { width: 100%; flex-wrap: wrap; }
+          .header-btn { flex: 1 1 140px; justify-content: center; }
+        }
+        @media (max-width:640px) {
+          .top-header { padding:12px 16px !important; }
+          .main-body  { padding:16px !important; }
+          .stats-row  { grid-template-columns:1fr 1fr !important; }
+          .tabs-row   { flex-direction:column; align-items:stretch !important; }
+          .meeting-row { flex-direction: column; align-items: stretch !important; }
+          .meeting-divider { display: none; }
+          .meeting-time { display: flex; align-items: center; gap: 12px; min-width: 0 !important; text-align: left !important; padding-top: 0 !important; }
+          .meeting-actions { width: 100%; }
+          .meeting-actions > * { flex: 1 1 120px; }
+          .meeting-actions a, .meeting-actions button, .meeting-actions select { justify-content: center; }
+        }
+        @media (max-width:520px) {
+          .stats-row  { grid-template-columns:1fr !important; }
+          .search-wrap { width: 100%; }
         }
       `}</style>
 
@@ -574,7 +964,7 @@ export default function AdminPage() {
           <span style={{ fontFamily: "'Instrument Serif', serif", fontSize: 17, color: "#0f172a", fontWeight: 400 }}>Smart Logics</span>
           <span style={{ fontSize: 11, color: "#94a3b8", background: "#f1f5f9", padding: "2px 8px", borderRadius: 4, fontWeight: 500 }}>Admin</span>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="header-actions" style={{ display: "flex", gap: 8 }}>
           <button className="header-btn" onClick={() => setShowSettings(true)}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
             Availability
@@ -587,13 +977,12 @@ export default function AdminPage() {
       </div>
 
       <div className="main-body" style={{ maxWidth: 900, margin: "0 auto", padding: "28px 32px" }}>
-
         {/* Stats */}
         <div className="stats-row" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 28 }}>
           {[
-            { label: "Today",      value: todayMeetings.length,    color: "#6366f1", sub: `${todayMeetings.filter(m => m.status === "upcoming").length} upcoming` },
-            { label: "Upcoming",   value: upcomingMeetings.length,  color: "#2563eb", sub: "future meetings" },
-            { label: "Past",       value: pastMeetings.length,      color: "#64748b", sub: `${pastMeetings.filter(m => m.status === "completed").length} completed` },
+            { label: "Today",    value: todayMeetings.length,    color: "#6366f1", sub: `${todayMeetings.filter(m => m.status === "upcoming").length} upcoming` },
+            { label: "Upcoming", value: upcomingMeetings.length, color: "#2563eb", sub: "future meetings" },
+            { label: "Past",     value: pastMeetings.length,     color: "#64748b", sub: `${pastMeetings.filter(m => m.status === "completed").length} completed` },
           ].map(s => (
             <div key={s.label} style={{ background: "#fff", borderRadius: 10, padding: "16px 20px", border: "1px solid #e2e8f0" }}>
               <p style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 }}>{s.label}</p>
@@ -621,9 +1010,9 @@ export default function AdminPage() {
         {/* Section title */}
         <div style={{ marginBottom: 14 }}>
           <h2 style={{ fontSize: 15, fontWeight: 600, color: "#0f172a" }}>
-            {activeTab === "today"    && "Today's Meetings"}
+            {activeTab === "today" && "Today's Meetings"}
             {activeTab === "upcoming" && "Upcoming Meetings"}
-            {activeTab === "past"     && "Past Meetings"}
+            {activeTab === "past" && "Past Meetings"}
           </h2>
           <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 3 }}>
             {activeTab === "today"    && new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
